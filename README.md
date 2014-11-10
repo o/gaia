@@ -12,8 +12,8 @@ Restful application for collecting and aggregating event metrics in timeseries m
 Prequisities
 ============
 
-Java JDK 1.7
-Redis 2.6 or higher
+* Java JDK 1.7
+* Redis 2.6 or higher
 
 Running
 =======
