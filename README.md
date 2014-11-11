@@ -10,19 +10,27 @@ Gaia is an open-source restful application for collecting and aggregating event 
 
 ###Running
 
-For building a runnable fat jar file, you need to run package goal of maven.
+Get the latest source code from Github.
+
+```
+git clone https://github.com/o/gaia.git
+```
+
+For building a runnable "fat" JAR file, run package goal of maven in the root directory of project.
 
 ```
 $ mvn package
 ```
 
-After build process, jar file will be created at `target` directory.
+After build process, JAR file will be created at `target` directory. You can run Gaia with the following command:
 
 ```
 $ java -jar target/gaia-0.3.0.jar server config.yml
 ```
 
-*You need to run `redis-server` before pushing events and querying stored data.*
+If you press `^C`, the application will shut down gracefully.
+
+**You need to run `redis-server` before pushing events and querying stored data.**
 
 ###Configuration
 
@@ -85,19 +93,93 @@ $ curl -sS -X GET 'http://localhost:8080/events/foo?start=1415697030&end=1415718
 
 ```
 
-###Events
+###Data storage model
 
 TODO
 
-###Tips and tricks
+###Deployment and operational tips
+
+####Health checks
+
+Thanks to Dropwizard, Gaia comes with built-in health check for verifying connectivity to redis instance and application deadlocks.
+
+```
+$ curl 'http://localhost:8081/healthcheck'
+
+{"deadlocks":{"healthy":true},"jedis-pool":{"healthy":true}}
+```
+
+If all health checks report success, a 200 OK is returned. If any fail, a 500 Internal Server Error is returned with the error messages.
+
+####Running behind Nginx and Haproxy
+
+Here is the example Nginx configuration:
+
+```
+server {
+    listen 80;
+
+    server_name metrics.domain.com;
+
+    location / {
+        proxy_pass http://localhost:8080;
+    }
+
+    location /ping {
+        proxy_pass http://localhost:8081;
+        root /ping;
+    }
+
+}
+```
+
+To deny access to 8080 and 8081 (used for administrative purposes) ports run following rules:
+ 
+```
+iptables -A INPUT -p tcp -i eth0 --dport 8080 -j REJECT --reject-with tcp-reset
+iptables -A INPUT -p tcp -i eth0 --dport 8081 -j REJECT --reject-with tcp-reset
+```
+
+If you're running several Gaia instances behind Haproxy, you can enable health checks with the configuration like this:
+
+```
+frontend http
+    bind :80
+    
+    ...
+    default_backend gaia_cluster
+
+backend gaia_cluster
+    option httpchk GET /ping
+    http-check expect string pong
+
+    ...
+    server metrics04 metrics04.domain.com:80 check
+```
 
 ####Running with supervisord
 
-TODO
+[Supervisor](http://supervisord.org/) allows users to monitor and control a number of processes on UNIX-like operating systems. Installation instructions can be found in [here](http://supervisord.org/installing.html#installing-a-distribution-package).
 
-####Running behind load balancer
+To running Gaia as a daemon with supervisord, add the following lines to supervisord configuration.
 
-TODO
+```
+[program:gaia]
+command=/usr/bin/java -jar /path/to/gaia.jar server /path/to/config.yml
+```
+
+Then run following commands:
+
+```
+supervisorctl reread
+supervisorctl update
+```
+
+For checking status of Gaia daemon, run `supervisorctl status`.
+
+```
+gaia                             RUNNING    pid 10636, uptime 39 days, 6:15:15
+```
 
 ###Internals
 
@@ -132,4 +214,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
