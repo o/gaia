@@ -18,6 +18,7 @@ public class RedisDatastore implements DatastoreInterface {
             new ImmutableMap.Builder<String, Long>()
                     .put("min", 60L)
                     .put("5min", 300L)
+                    .put("15min", 900L)
                     .put("hour", 3600L)
                     .put("day", 86400L)
                     .put("week", 604800L)
@@ -31,11 +32,15 @@ public class RedisDatastore implements DatastoreInterface {
         this.pool = pool;
     }
 
-    private Long roundTimestampToResolution(Long timeAsMilliSeconds, Long resolution) {
+    protected Long roundTimestampToResolution(Long timeAsMilliSeconds, Long resolution) {
         return (timeAsMilliSeconds - (timeAsMilliSeconds % resolution));
     }
 
-    private Map<String, Long> getTimestampsForPush(Long timestamp) {
+    protected Long getResolution(String resolution) {
+        return RESOLUTIONS.get(resolution);
+    }
+
+    protected Map<String, Long> getTimestampsForPush(Long timestamp) {
         Map<String, Long> timestamps = new HashMap<String, Long>();
 
         for (Entry<String, Long> entry : RESOLUTIONS.entrySet()) {
@@ -45,7 +50,7 @@ public class RedisDatastore implements DatastoreInterface {
         return timestamps;
     }
 
-    private List<Long> getTimestampsForQuery(Long start, Long end, Long resolution) {
+    protected List<Long> getTimestampsForQuery(Long start, Long end, Long resolution) {
         List<Long> timestamps = new ArrayList<Long>();
 
         final Long roundedStartTimestamp = roundTimestampToResolution(start, resolution);
@@ -58,7 +63,7 @@ public class RedisDatastore implements DatastoreInterface {
         return timestamps;
     }
 
-    private String getEventKey(String event, String resolution) {
+    protected String getEventKey(String event, String resolution) {
         return new StringBuilder("gaia:").append(event).append(":").append(resolution).toString();
     }
 
@@ -78,7 +83,7 @@ public class RedisDatastore implements DatastoreInterface {
 
     @Override
     public List<Event> query(String event, Long start, Long end, String resolution) {
-        List<Long> timestamps = getTimestampsForQuery(start, end, RESOLUTIONS.get(resolution));
+        List<Long> timestamps = getTimestampsForQuery(start, end, getResolution(resolution));
         List<Event> result = new ArrayList<Event>();
         String eventKey = getEventKey(event, resolution);
         try (Jedis jedis = pool.getResource()) {
