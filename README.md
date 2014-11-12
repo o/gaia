@@ -135,34 +135,39 @@ $ curl -sS -X GET 'http://localhost:8080/events/foo?start=1415697030&end=1415718
 
 ###Events naming design
 
-It's completely up to your **querying strategy**, keep it simple, short and meaningful. Here is the some examples:
+It's completely up to your **querying strategy**, keep it simple, short and meaningful. Don't hesitate to push multiple events for different querying requirements.
 
-**Scenario**: How many times a product page displayed?
+Here is the some examples:
 
-**Schema**: `<group>-<object>-<identifier>`
+Scenario: How many times a product page displayed?
 
-**Example**: `view-product-324569`
+Schema: `<group>-<object>-<identifier>`
 
+Example: `view-product-324569`
 
-**Scenario**: How many times a product page displayed from desktop **or** mobile?
+---
 
-**Schema**: `<group>-<object>-<identifier>-<tag>`
+Scenario: How many times a product page displayed from desktop **or** mobile?
 
-**Example**: `view-product-324569-desktop`, `view-product-324569-mobile`
+Schema: `<group>-<object>-<identifier>-<tag>`
 
+Example: `view-product-324569-desktop`, `view-product-324569-mobile`
 
-**Scenario**: How many times a product page displayed from desktop **and / or** mobile?
+---
 
-**Schema**: `<group>-<object>-<identifier>-<tag>`
+Scenario: How many times a product page displayed from desktop **and / or** mobile?
 
-**Example**: `view-product-324569-desktop`, `view-product-324569-mobile`, `view-product-324569-total`
+Schema: `<group>-<object>-<identifier>-<tag>`
 
+Example: `view-product-324569-desktop`, `view-product-324569-mobile`, `view-product-324569-total`
 
-**Scenario**: How many times a product listed in search results?
+---
 
-**Schema**: `<group>-<object>-<identifier>`
+Scenario: How many times a product listed in search results?
 
-**Example**: `listingview-product-324569`
+Schema: `<group>-<object>-<identifier>`
+
+Example: `listingview-product-324569`
 
 ###Internals
 
