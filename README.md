@@ -133,7 +133,38 @@ $ curl -sS -X GET 'http://localhost:8080/events/foo?start=1415697030&end=1415718
 
 ```
 
-###Events and Data storage model
+###Events naming design
+
+It's completely up to your **querying strategy**, keep it simple, short and meaningful. Here is the some examples:
+
+**Scenario**: How many times a product page displayed?
+
+**Schema**: `<group>-<object>-<identifier>`
+
+**Example**: `view-product-324569`
+
+
+**Scenario**: How many times a product page displayed from desktop **or** mobile?
+
+**Schema**: `<group>-<object>-<identifier>-<tag>`
+
+**Example**: `view-product-324569-desktop`, `view-product-324569-mobile`
+
+
+**Scenario**: How many times a product page displayed from desktop **and / or** mobile?
+
+**Schema**: `<group>-<object>-<identifier>-<tag>`
+
+**Example**: `view-product-324569-desktop`, `view-product-324569-mobile`, `view-product-324569-total`
+
+
+**Scenario**: How many times a product listed in search results?
+
+**Schema**: `<group>-<object>-<identifier>`
+
+**Example**: `listingview-product-324569`
+
+###Internals
 
 TODO
 
@@ -220,10 +251,6 @@ For checking status of Gaia daemon, run `supervisorctl status`.
 ```
 gaia                             RUNNING    pid 10636, uptime 39 days, 6:15:15
 ```
-
-###Internals
-
-TODO
 
 ###Tests
 
