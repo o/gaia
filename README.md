@@ -25,7 +25,7 @@ $ mvn package
 After build process, JAR file will be created at `target` directory. You can run Gaia with the following command:
 
 ```
-$ java -jar target/gaia-0.3.0.jar server config.yml
+$ java -jar target/gaia-0.4.0.jar server config.yml
 ```
 
 If you press `^C`, the application will shut down gracefully.
