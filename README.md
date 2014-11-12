@@ -34,7 +34,7 @@ If you press `^C`, the application will shut down gracefully.
 
 ###Configuration
 
-Gaia uses redis for storing data. If you need to configure default server and port address of redis instance, you can configure it from `config.yml` file placed in root directory.
+Gaia uses Redis for storing data. If you need to configure default server and port address of Redis instance, you can configure it from `config.yml` file placed in root directory.
 
 ###Talking to Gaia
 
@@ -61,9 +61,9 @@ POST /events
 
 `increment`, this argument is useful for overriding event count for submitting multiple events in single operation. (Defaults to 1)
 
-`timestamp`, this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
+`timestamp`, if you need irregular updates. this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
 
-Simply, if you want to send only one event related to current time, specifying `name` parameter is good enough. If everything runs smoothly `201 Created` with empty body is returned. If fails (Ex: connection interruption with redis instance) `500 Internal Server Error` response is returned.
+Simply, if you want to send only one event related to current time, specifying `name` parameter is good enough. If everything runs smoothly `201 Created` response with empty body is returned. If fails (Ex: connection interruption with Redis instance) `500 Internal Server Error` response is returned.
 
 Example:
 
@@ -171,13 +171,34 @@ Example: `listingview-product-324569`
 
 ###Internals
 
-TODO
+Gaia keeps event data in hashes. Hashes is very [memory efficient]((http://instagram-engineering.tumblr.com/post/12202313862/storing-hundreds-of-millions-of-simple-key-value-pairs)) and [plays well with CPU](http://redis.io/topics/memory-optimization). Also event key lookups and querying data is more faster.
+
+All keys about events keeping under `gaia:` keyspace in redis. When you push a new event to Gaia, it send following commands to Redis.
+
+```
+"HINCRBY" "gaia:foo:min" "1415809680" "1"
+"HINCRBY" "gaia:foo:15min" "1415808900" "1"
+"HINCRBY" "gaia:foo:month" "1415232000" "1"
+"HINCRBY" "gaia:foo:5min" "1415809500" "1"
+"HINCRBY" "gaia:foo:year" "1387584000" "1"
+"HINCRBY" "gaia:foo:day" "1415750400" "1"
+"HINCRBY" "gaia:foo:hour" "1415808000" "1"
+"HINCRBY" "gaia:foo:week" "1415232000" "1"
+```
+
+This operation is enclosed in a pipeline for sending multiple commands in a single step. Using pipelining hugely improves performance of push operation.
+
+Gaia supports different resolutions from minute to year and keeps all values without expiring old values. So, you can query values of last 2 years in a minute precision. 
+
+As of simplicity, Redis doesn't allow to expiring keys of hashes. Manual deletion of hash keys for clearing old values is very expensive operation if you have millions of events, but it's in the road map.
+
+Gaia not supports data source types like `GAUGE` and `COUNTER`'s . Naturally it not uses fixed sized database like [RRDTool](http://oss.oetiker.ch/rrdtool/) or [Whisper](http://graphite.readthedocs.org/en/latest/whisper.html). 
 
 ###Deployment and operational tips
 
 ####Health checks
 
-Thanks to Dropwizard, Gaia comes with built-in health check for verifying thread deadlocks and connectivity to redis instance.
+Thanks to Dropwizard, Gaia comes with built-in health check for verifying thread deadlocks and connectivity to Redis instance.
 
 ```
 $ curl 'http://localhost:8081/healthcheck'
@@ -263,7 +284,7 @@ You can run tests with `mvn test`.
 
 ###Contributing
 
-TODO 
+Don't hesitate to make performance optimization proposals, adding new tests or helpful tricks to documentation. If you have any problems with running Gaia please open an issue from Issues page. 
 
 ###License
 
