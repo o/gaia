@@ -1,6 +1,6 @@
 #Gaia
 
-Gaia is an open-source restful application for collecting and aggregating event metrics in timeseries manner. It shares same philosophy with [Simmetrica](https://github.com/simmetrica), but built for concurrency and scalability. Uses [Dropwizard](http://dropwizard.io) and [Redis](http://redis.io) under the hood.
+Gaia is an open-source RESTful application for collecting and aggregating event metrics in timeseries manner. It shares same philosophy with [Simmetrica](https://github.com/simmetrica), but built for concurrency and scalability. Uses [Dropwizard](http://dropwizard.io) and [Redis](http://redis.io) under the hood.
 
 ###Prerequisites
 
@@ -34,15 +34,15 @@ If you press `^C`, the application will shut down gracefully.
 
 ###Configuration
 
-Gaia uses Redis for storing data. If you need to configure default server and port address of Redis instance, you can configure it from `config.yml` file placed in root directory.
+Gaia uses Redis for storing data. If you need to configure default server and port address of Redis instance, you can set it from `config.yml` which located in the root directory.
 
 ###Talking to Gaia
 
-After running Gaia, it exposes restful api with JSON over HTTP for pushing and querying data. It can be accessible from `http://127.0.0.1:8000`.
+After running Gaia, it exposes RESTful API over HTTP with JSON output for pushing and querying data. It can be accessible from `http://127.0.0.1:8000`.
 
 ####How to push events
 
-For pushing a new event, we need to execute a HTTP POST request with JSON payload includes parameters. 
+For pushing a new event, we need to make an HTTP POST request with a JSON payload including the default parameters.
 
 ```
 POST /events
@@ -55,7 +55,7 @@ POST /events
 
 **Required parameters**
 
-`name`, which is canonical name of your input data. You will also use this name for querying event data. Event name must be consists with alphanumeric characters and dash. (Ex: `view-userprofile-890`)
+`name`, which is canonical name of your input data. You will also use this for querying event data. Event name should consist of alphanumeric characters and dash. (Ex: `view-userprofile-890`)
 
 **Optional parameters**
 
@@ -63,7 +63,7 @@ POST /events
 
 `timestamp`, if you need irregular updates, this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
 
-Simply, if you want to send only one event related to current time, specifying `name` parameter is good enough. If everything runs smoothly `201 Created` response with empty body is returned. If fails (Ex: connection interruption with Redis instance) `500 Internal Server Error` response is returned.
+Simply, if you want to send only one event related to current time, specifying `name` parameter is good enough. If everything went smoothly `201 Created` response with empty body is returned. If something went wrong (Ex: connection interruption with Redis instance) `500 Internal Server Error` response is returned.
 
 Example:
 
@@ -76,23 +76,23 @@ Content-Type: application/json
 Content-Length: 0
 ```
 
-If parameters in JSON payload is could'nt be validated an error response with `400 Bad Request` for `increment` and `now` parameters, `422 Unprocessable Entity` for `event` parameter will be returned with error messages. If you forget to add `Content-Type: application/json` header in request `415 Unsupported Media Type` will be returned.
+If there was a validation error with JSON payload an error response with `400 Bad Request` for `increment` and `now` parameters, `422 Unprocessable Entity` for `event` parameter will be returned with error messages. If you forget to add `Content-Type: application/json` header in request `415 Unsupported Media Type` will be returned.
 
 
 ####How to query events
 
-For querying events from Gaia, we simply execute an HTTP GET request and specify the parameters about event name, data granularity and time range. 
+For querying events from Gaia, we simply make an HTTP GET request and specify the parameters about event name, data granularity and time range.
 
 ```
 GET /events/<String>?start=<Long>&end=<Long>&resolution=<String>
 ```
 
-**All parameters is mandatory**
+**All parameters are mandatory**
 
-`event`, as you guessed, we already used this value for feeding our data. 
+`event`, as you guessed, we already used this value for feeding our data.
 
 `start` and `end` parameters take Unix timestamp for specifying interval of time-series.
- 
+
 `resolution` is used for defining the resolution / granularity of data. Possible values are `min`, `5min`, `15min`, `hour`, `day`, `week`, `month` and `year`.
 
 Example:
@@ -137,7 +137,7 @@ $ curl -sS -X GET 'http://localhost:8080/events/foo?start=1415697030&end=1415718
 
 It's completely up to your **querying strategy**, keep it simple, short and meaningful. Don't hesitate to push multiple events for different querying requirements.
 
-Here is the some examples:
+Here are some examples:
 
 Scenario: How many times a product page displayed?
 
@@ -171,9 +171,9 @@ Example: `listingview-product-324569`
 
 ###Internals
 
-Gaia keeps event data in hashes. Hashes is very [memory efficient](http://instagram-engineering.tumblr.com/post/12202313862/storing-hundreds-of-millions-of-simple-key-value-pairs) and [plays well with CPU](http://redis.io/topics/memory-optimization). Also event key lookups and querying data is more faster.
+Gaia keeps event data in hashes. Hashes are very [memory efficient](http://instagram-engineering.tumblr.com/post/12202313862/storing-hundreds-of-millions-of-simple-key-value-pairs) and [plays well with CPU](http://redis.io/topics/memory-optimization). Also event key lookups and querying data is faster.
 
-All keys about events keeping under `gaia:` keyspace in redis. When you push a new event to Gaia, it send following commands to Redis.
+All keys about events keeping under `gaia:` keyspace in redis. When you push a new event to Gaia, it sends following commands to Redis.
 
 ```
 "HINCRBY" "gaia:foo:min" "1415809680" "1"
@@ -188,11 +188,11 @@ All keys about events keeping under `gaia:` keyspace in redis. When you push a n
 
 This operation is enclosed in a pipeline for sending multiple commands in a single step. Using pipelining hugely improves performance of push operation.
 
-Gaia supports different resolutions from minute to year and keeps all values without expiring old values. So, you can query values of last 2 years in a minute precision. 
+Gaia supports different resolutions from minute to year and keeps all values without expiring old values. So, you can query values of last 2 years in a minute precision.
 
-As of simplicity, Redis doesn't allow to expiring keys of hashes. Manual deletion of hash keys for clearing old values is very expensive operation if you have millions of events, but it's in the road map.
+For the simplicity, Redis doesn't allow to expire keys of hashes. Manual deletion of hash keys for clearing old values is very expensive operation if you have millions of events, but it's in the road map.
 
-Gaia not supports data source types like `GAUGE` and `COUNTER`'s . Naturally it not uses fixed sized database like [RRDTool](http://oss.oetiker.ch/rrdtool/) or [Whisper](http://graphite.readthedocs.org/en/latest/whisper.html). 
+Gaia does not support data source types like `GAUGE` and `COUNTER` . Naturally it does not use fixed sized databases like [RRDTool](http://oss.oetiker.ch/rrdtool/) or [Whisper](http://graphite.readthedocs.org/en/latest/whisper.html).
 
 ###Deployment and operational tips
 
@@ -206,7 +206,7 @@ $ curl 'http://localhost:8081/healthcheck'
 {"deadlocks":{"healthy":true},"jedis-pool":{"healthy":true}}
 ```
 
-If all health checks report success, a `200 OK` is returned. If any fail, a `500 Internal Server Error` is returned with the error messages.
+If all health checks report success, a `200 OK` is returned. If any of them fails, a `500 Internal Server Error` is returned with the error messages.
 
 ####Running behind Nginx and Haproxy
 
@@ -231,7 +231,7 @@ server {
 ```
 
 To deny access to 8080 and 8081 (used for administrative purposes) ports run following rules:
- 
+
 ```
 iptables -A INPUT -p tcp -i eth0 --dport 8080 -j REJECT --reject-with tcp-reset
 iptables -A INPUT -p tcp -i eth0 --dport 8081 -j REJECT --reject-with tcp-reset
@@ -242,7 +242,7 @@ If you're running several Gaia instances behind Haproxy, you can enable health c
 ```
 frontend http
     bind :80
-    
+
     ...
     default_backend gaia_cluster
 
@@ -256,9 +256,9 @@ backend gaia_cluster
 
 ####Running with supervisord
 
-[Supervisor](http://supervisord.org/) allows users to monitor and control a number of processes on UNIX-like operating systems. Installation instructions can be found in [here](http://supervisord.org/installing.html#installing-a-distribution-package).
+[Supervisor](http://supervisord.org/) allows users to monitor and control a number of process on UNIX-like operating systems. Installation instructions can be found in [here](http://supervisord.org/installing.html#installing-a-distribution-package).
 
-To running Gaia as a daemon with supervisord, add the following lines to supervisord configuration.
+To run Gaia as a daemon with supervisord, add the following lines to supervisord configuration.
 
 ```
 [program:gaia]
@@ -284,7 +284,7 @@ You can run tests with `mvn test`.
 
 ###Contributing
 
-Don't hesitate to make performance optimization proposals, adding new tests or helpful tricks to documentation. If you have any problems with running Gaia please open an issue from Issues page. 
+Don't hesitate to make performance optimization proposals, adding new tests or helpful tricks to documentation. If you have any problems with running Gaia please open an issue from Issues page.
 
 ###License
 
