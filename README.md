@@ -61,7 +61,7 @@ POST /events
 
 `increment`, this argument is useful for overriding event count for submitting multiple events in single operation. (Defaults to 1)
 
-`timestamp`, if you need irregular updates. this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
+`timestamp`, if you need irregular updates, this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
 
 Simply, if you want to send only one event related to current time, specifying `name` parameter is good enough. If everything runs smoothly `201 Created` response with empty body is returned. If fails (Ex: connection interruption with Redis instance) `500 Internal Server Error` response is returned.
 
@@ -171,7 +171,7 @@ Example: `listingview-product-324569`
 
 ###Internals
 
-Gaia keeps event data in hashes. Hashes is very [memory efficient]((http://instagram-engineering.tumblr.com/post/12202313862/storing-hundreds-of-millions-of-simple-key-value-pairs)) and [plays well with CPU](http://redis.io/topics/memory-optimization). Also event key lookups and querying data is more faster.
+Gaia keeps event data in hashes. Hashes is very [memory efficient](http://instagram-engineering.tumblr.com/post/12202313862/storing-hundreds-of-millions-of-simple-key-value-pairs) and [plays well with CPU](http://redis.io/topics/memory-optimization). Also event key lookups and querying data is more faster.
 
 All keys about events keeping under `gaia:` keyspace in redis. When you push a new event to Gaia, it send following commands to Redis.
 
