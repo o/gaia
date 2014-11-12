@@ -8,7 +8,7 @@ import javax.validation.constraints.Pattern;
 
 public class PushEvent {
 
-    private static final String EVENT_NAME_REGEX = "[a-zA-Z0-9_-]*";
+    private static final String EVENT_NAME_REGEX = "[a-zA-Z0-9-]*";
 
     @NotEmpty
     @Pattern(regexp = EVENT_NAME_REGEX)
