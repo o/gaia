@@ -13,7 +13,7 @@ Gaia is an open-source restful application for collecting and aggregating event 
 Get the latest source code from Github.
 
 ```
-git clone https://github.com/o/gaia.git
+$ git clone https://github.com/o/gaia.git
 ```
 
 For building a runnable "fat" JAR file, run package goal of maven in the root directory of project.
@@ -44,17 +44,28 @@ After running Gaia, it exposes restful api with JSON over HTTP for pushing and q
 
 For pushing a new event, we need to execute a HTTP POST request with JSON payload includes parameters. 
 
+```
+POST /events
+{
+  "name": "<String>",
+  "increment": "Optional<Long>",
+  "timestamp": "Optional<Long>"
+}
+```
+
 **Required parameters**
 
-`name`: which is canonical name of your input data. You will also use this name for querying event data. Event name must be consists with alphanumeric characters and dash. (Ex: `view-userprofile-890`)
+`name`, which is canonical name of your input data. You will also use this name for querying event data. Event name must be consists with alphanumeric characters and dash. (Ex: `view-userprofile-890`)
 
 **Optional parameters**
 
-`increment`: this argument is useful for overriding event count for submitting multiple events in single operation. (Defaults to 1)
+`increment`, this argument is useful for overriding event count for submitting multiple events in single operation. (Defaults to 1)
 
-`now`: this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
+`timestamp`, this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
 
 Simply, if you want to send only one event related to current time, specifying `name` parameter is good enough. If everything runs smoothly `201 Created` with empty body is returned. If fails (Ex: connection interruption with redis instance) `500 Internal Server Error` response is returned.
+
+Example:
 
 ```
 $ curl -i -X POST -H 'Content-Type: application/json' -d '{"name": "foo"}' http://localhost:8080/events
@@ -71,6 +82,20 @@ If parameters in JSON payload is could'nt be validated an error response with `4
 ####How to query events
 
 For querying events from Gaia, we simply execute an HTTP GET request and specify the parameters about event name, data granularity and time range. 
+
+```
+GET /events/<String>?start=<Long>&end=<Long>&resolution=<String>
+```
+
+**All parameters is mandatory**
+
+`event`, as you guessed, we already used this value for feeding our data. 
+
+`start` and `end` parameters take Unix timestamp for specifying interval of time-series.
+ 
+`resolution` is used for defining the resolution / granularity of data. Possible values are `min`, `5min`, `15min`, `hour`, `day`, `week`, `month` and `year`.
+
+Example:
 
 ```
 $ curl -sS -X GET 'http://localhost:8080/events/foo?start=1415697030&end=1415718630&resolution=hour'
@@ -116,7 +141,7 @@ TODO
 
 ####Health checks
 
-Thanks to Dropwizard, Gaia comes with built-in health check for verifying connectivity to redis instance and application deadlocks.
+Thanks to Dropwizard, Gaia comes with built-in health check for verifying thread deadlocks and connectivity to redis instance.
 
 ```
 $ curl 'http://localhost:8081/healthcheck'
@@ -124,7 +149,7 @@ $ curl 'http://localhost:8081/healthcheck'
 {"deadlocks":{"healthy":true},"jedis-pool":{"healthy":true}}
 ```
 
-If all health checks report success, a 200 OK is returned. If any fail, a 500 Internal Server Error is returned with the error messages.
+If all health checks report success, a `200 OK` is returned. If any fail, a `500 Internal Server Error` is returned with the error messages.
 
 ####Running behind Nginx and Haproxy
 
