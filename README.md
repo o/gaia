@@ -42,7 +42,19 @@ After running Gaia, it exposes restful api with JSON over HTTP for pushing and q
 
 ####How to push events
 
-TODO
+For pushing a new event, we need to execute a HTTP POST request with JSON payload includes parameters. 
+
+**Required parameters**
+
+`name`: which is canonical name of your input data. You will also use this name for querying event data. Event name must be consists with alphanumeric characters and dash. (Ex: `view-userprofile-890`)
+
+**Optional parameters**
+
+`increment`: this argument is useful for overriding event count for submitting multiple events in single operation. (Defaults to 1)
+
+`now`: this argument lets you specify when event occurs. (Defaults to current Unix timestamp)
+
+Simply, if you want to send only one event related to current time, specifying `name` parameter is good enough. If everything runs smoothly `201 Created` with empty body is returned. If fails (Ex: connection interruption with redis instance) `500 Internal Server Error` response is returned.
 
 ```
 $ curl -i -X POST -H 'Content-Type: application/json' -d '{"name": "foo"}' http://localhost:8080/events
@@ -53,9 +65,12 @@ Content-Type: application/json
 Content-Length: 0
 ```
 
+If parameters in JSON payload is could'nt be validated an error response with `400 Bad Request` for `increment` and `now` parameters, `422 Unprocessable Entity` for `event` parameter will be returned with error messages. If you forget to add `Content-Type: application/json` header in request `415 Unsupported Media Type` will be returned.
+
+
 ####How to query events
 
-TODO
+For querying events from Gaia, we simply execute an HTTP GET request and specify the parameters about event name, data granularity and time range. 
 
 ```
 $ curl -sS -X GET 'http://localhost:8080/events/foo?start=1415697030&end=1415718630&resolution=hour'
@@ -93,7 +108,7 @@ $ curl -sS -X GET 'http://localhost:8080/events/foo?start=1415697030&end=1415718
 
 ```
 
-###Data storage model
+###Events and Data storage model
 
 TODO
 
