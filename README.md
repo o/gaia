@@ -1,6 +1,6 @@
 #Gaia
 
-Gaia is an open-source RESTful application for collecting and aggregating event metrics in timeseries manner. It shares same philosophy with [Simmetrica](https://github.com/simmetrica), but built for concurrency and scalability. Uses [Dropwizard](http://dropwizard.io) and [Redis](http://redis.io) under the hood.
+Gaia is an open-source RESTful application for collecting and aggregating event metrics in timeseries manner. It shares same philosophy with [Simmetrica](https://github.com/o/simmetrica), but built for concurrency and scalability. Uses [Dropwizard](http://dropwizard.io) and [Redis](http://redis.io) under the hood.
 
 ###Prerequisites
 
